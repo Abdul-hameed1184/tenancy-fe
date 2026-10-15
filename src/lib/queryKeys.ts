@@ -7,14 +7,23 @@ export const queryKeys = {
     list: (filters?: object) => ["properties", "list", filters] as const,
     detail: (id: string) => ["properties", "detail", id] as const,
     topPerforming: (agentId: string) => ["properties", "top", agentId] as const,
-    byLandlord: (landlordId: string) => ["properties", "byLandlord", landlordId] as const,
+    byLandlord: (landlordId: string) =>
+      ["properties", "byLandlord", landlordId] as const,
   },
   tenants: {
     all: ["tenants"] as const,
     list: () => ["tenants", "list"] as const,
+    candidates: (propertyId: string, search: string) =>
+      ["tenants", "candidates", propertyId, search] as const,
     detail: (id: string) => ["tenants", "detail", id] as const,
-    byProperty: (propertyId: string) => ["tenants", "byProperty", propertyId] as const,
-    myTenancy: (tenantId: string) => ["tenants", "myTenancy", tenantId] as const,
+    byProperty: (propertyId: string) =>
+      ["tenants", "byProperty", propertyId] as const,
+    myTenancy: (tenantId: string) =>
+      ["tenants", "myTenancy", tenantId] as const,
+  },
+  notifications: {
+    all: ["notifications"] as const,
+    list: () => ["notifications", "list"] as const,
   },
   payments: {
     history: (tenancyId: string) => ["payments", "history", tenancyId] as const,
@@ -37,6 +46,7 @@ export const queryKeys = {
   },
   messages: {
     threads: (userId: string) => ["messages", "threads", userId] as const,
+    contacts: (userId: string) => ["messages", "contacts", userId] as const,
     thread: (threadId: string) => ["messages", "thread", threadId] as const,
   },
   reports: {
@@ -45,6 +55,7 @@ export const queryKeys = {
   },
   dashboardStats: {
     agent: (agentId: string) => ["dashboardStats", "agent", agentId] as const,
-    landlord: (landlordId: string) => ["dashboardStats", "landlord", landlordId] as const,
+    landlord: (landlordId: string) =>
+      ["dashboardStats", "landlord", landlordId] as const,
   },
 } as const;

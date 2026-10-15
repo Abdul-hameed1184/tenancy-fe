@@ -6,6 +6,8 @@ const api: typeof remote = USE_MOCKS ? mock : remote;
 
 export const {
   getThreads,
+  getMessageContacts,
   getThreadMessages,
+  markThreadRead,
   sendMessage,
 } = api;

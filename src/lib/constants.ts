@@ -9,6 +9,9 @@ export const ROLE_HOME_ROUTE: Record<Role, string> = {
   tenant: "/tenant",
 };
 
+/** "Check your inbox" page for signed-in users who haven't verified their email yet. */
+export const VERIFY_EMAIL_NOTICE_ROUTE = "/auth/verify-email-sent";
+
 export const ROLE_LABELS: Record<Role, string> = {
   admin: "Admin",
   landlord: "Landlord",

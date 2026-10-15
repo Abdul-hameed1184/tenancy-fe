@@ -12,4 +12,6 @@ export const {
   updateProfile,
   forgotPassword,
   resetPassword,
+  verifyEmail,
+  resendVerification,
 } = api;

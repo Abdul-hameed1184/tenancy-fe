@@ -45,7 +45,8 @@ const SAFE_RENTING_TIPS = [
 
 function hashSeed(id: string) {
   let hash = 0;
-  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) % 1000;
+  for (let i = 0; i < id.length; i++)
+    hash = (hash * 31 + id.charCodeAt(i)) % 1000;
   return hash;
 }
 
@@ -57,7 +58,8 @@ function propertyType(title: string) {
 }
 
 function agentExperienceYears(createdAt: string) {
-  const years = (Date.now() - new Date(createdAt).getTime()) / (365 * 24 * 60 * 60 * 1000);
+  const years =
+    (Date.now() - new Date(createdAt).getTime()) / (365 * 24 * 60 * 60 * 1000);
   return Math.max(1, Math.floor(years));
 }
 
@@ -89,7 +91,13 @@ export default function PropertyDetailPage() {
   const specs = [
     { icon: BedDouble, label: "Bedrooms", value: String(property.bedrooms) },
     { icon: ShowerHead, label: "Bathrooms", value: String(property.bathrooms) },
-    { icon: Ruler, label: "Total Area", value: `${property.sqft.toLocaleString()} sqft` },
+    {
+      icon: Ruler,
+      label: "Total Area",
+      value: property.sqft
+        ? `${property.sqft.toLocaleString()} sqft`
+        : "Not provided",
+    },
     { icon: Building2, label: "Type", value: propertyType(property.title) },
   ];
 
@@ -109,7 +117,9 @@ export default function PropertyDetailPage() {
                 {property.neighborhood} &bull; {property.city}
               </Badge>
             </div>
-            <h1 className="mt-3 text-display-sm text-white sm:text-display-md">{property.title}</h1>
+            <h1 className="mt-3 text-display-sm text-white sm:text-display-md">
+              {property.title}
+            </h1>
             <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-navy-300">
               <span className="flex items-center gap-1">
                 <MapPin className="h-3.5 w-3.5 text-brand-400" />
@@ -136,7 +146,9 @@ export default function PropertyDetailPage() {
             </button>
             <button
               type="button"
-              onClick={() => navigator.clipboard?.writeText(window.location.href)}
+              onClick={() =>
+                navigator.clipboard?.writeText(window.location.href)
+              }
               className="flex h-10 w-10 items-center justify-center rounded-md border border-navy-700 text-navy-300 transition-colors hover:border-navy-600 hover:text-white"
               aria-label="Share listing"
             >
@@ -168,7 +180,9 @@ export default function PropertyDetailPage() {
                   className="flex-1 rounded-lg border border-white/10 bg-navy-950/70 px-3 py-2 text-center backdrop-blur-sm"
                 >
                   <s.icon className="mx-auto h-4 w-4 text-brand-400" />
-                  <p className="mt-1 text-[10px] uppercase tracking-wide text-navy-300">{s.label}</p>
+                  <p className="mt-1 text-[10px] uppercase tracking-wide text-navy-300">
+                    {s.label}
+                  </p>
                   <p className="text-sm font-semibold text-white">{s.value}</p>
                 </div>
               ))}
@@ -189,9 +203,14 @@ export default function PropertyDetailPage() {
         {/* Mobile spec chips */}
         <div className="mt-3 grid grid-cols-2 gap-2 sm:hidden">
           {specs.map((s) => (
-            <div key={s.label} className="rounded-lg border border-navy-700/60 bg-navy-850 px-3 py-2 text-center">
+            <div
+              key={s.label}
+              className="rounded-lg border border-navy-700/60 bg-navy-850 px-3 py-2 text-center"
+            >
               <s.icon className="mx-auto h-4 w-4 text-brand-400" />
-              <p className="mt-1 text-[10px] uppercase tracking-wide text-navy-400">{s.label}</p>
+              <p className="mt-1 text-[10px] uppercase tracking-wide text-navy-400">
+                {s.label}
+              </p>
               <p className="text-sm font-semibold text-white">{s.value}</p>
             </div>
           ))}
@@ -202,15 +221,19 @@ export default function PropertyDetailPage() {
           <div className="lg:col-span-2">
             <h2 className="text-lg font-bold text-white">About Property</h2>
             <p className="mt-3 text-sm leading-relaxed text-navy-300">
-              A breathtaking {propertyType(property.title).toLowerCase()} in the heart of{" "}
-              {property.neighborhood}. Features floor-to-ceiling windows, smart home integration,
-              and exclusive access to premium estate amenities. Designed for those who appreciate
-              architectural excellence and security — every payment and maintenance request for
-              this residence is tracked on PLEET's managed ledger.
+              A breathtaking {propertyType(property.title).toLowerCase()} in the
+              heart of {property.neighborhood}. Features floor-to-ceiling
+              windows, smart home integration, and exclusive access to premium
+              estate amenities. Designed for those who appreciate architectural
+              excellence and security — every payment and maintenance request
+              for this residence is tracked on PLEET's managed ledger.
             </p>
             <div className="mt-6 grid grid-cols-1 gap-x-8 gap-y-2 sm:grid-cols-2">
               {AMENITIES.map((a) => (
-                <div key={a} className="flex items-center gap-2 text-sm text-navy-200">
+                <div
+                  key={a}
+                  className="flex items-center gap-2 text-sm text-navy-200"
+                >
                   <CheckCircle2 className="h-4 w-4 shrink-0 text-brand-400" />
                   {a}
                 </div>
@@ -224,21 +247,31 @@ export default function PropertyDetailPage() {
                 <div className="flex items-center gap-3">
                   <Avatar className="h-12 w-12">
                     <AvatarImage src={agent.avatarUrl} alt={agent.name} />
-                    <AvatarFallback>{agent.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+                    <AvatarFallback>
+                      {agent.name.slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="text-sm font-semibold text-white">{agent.name}</p>
-                    <p className="text-xs text-navy-400">Licensed Elite Agent</p>
+                    <p className="text-sm font-semibold text-white">
+                      {agent.name}
+                    </p>
+                    <p className="text-xs text-navy-400">
+                      Licensed Elite Agent
+                    </p>
                   </div>
                 </div>
                 <div className="mt-4 space-y-2 border-t border-navy-700/60 pt-4 text-sm">
                   <div className="flex justify-between">
                     <span className="text-navy-400">Experience</span>
-                    <span className="text-brand-400">{agentExperienceYears(agent.createdAt)} years</span>
+                    <span className="text-brand-400">
+                      {agentExperienceYears(agent.createdAt)} years
+                    </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-navy-400">Properties</span>
-                    <span className="text-white">{agent.assetsManagedCount} Listings</span>
+                    <span className="text-white">
+                      {agent.assetsManagedCount} Listings
+                    </span>
                   </div>
                 </div>
                 <Button className="mt-4 w-full" asChild>
@@ -252,16 +285,22 @@ export default function PropertyDetailPage() {
                   </Link>
                 </Button>
                 <p className="mt-3 text-center text-[11px] text-navy-500">
-                  Property ID: PLEET-{property.id.replace(/\D/g, "").padStart(5, "0")}
+                  Property ID: PLEET-
+                  {property.id.replace(/\D/g, "").padStart(5, "0")}
                 </p>
               </Card>
             )}
 
             <Card className="p-5">
-              <p className="text-sm font-semibold text-white">Safe Renting Tips</p>
+              <p className="text-sm font-semibold text-white">
+                Safe Renting Tips
+              </p>
               <div className="mt-3 space-y-2">
                 {SAFE_RENTING_TIPS.map((tip) => (
-                  <div key={tip} className="flex items-start gap-2 text-xs text-navy-300">
+                  <div
+                    key={tip}
+                    className="flex items-start gap-2 text-xs text-navy-300"
+                  >
                     <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-brand-400" />
                     {tip}
                   </div>

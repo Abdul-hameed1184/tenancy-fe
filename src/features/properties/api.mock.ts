@@ -1,31 +1,43 @@
 import { withLatency } from "@/lib/api/http";
 import { db, genId } from "@/mocks/db";
-import type { Property, PropertyAgentAssignment, PropertyStatus } from "@/types/entities";
+import type {
+  Property,
+  PropertyAgentAssignment,
+  PropertyStatus,
+} from "@/types/entities";
 
 export interface PropertyFilters {
   city?: string;
   agentId?: string;
   landlordId?: string;
   status?: PropertyStatus;
+  available?: boolean;
   search?: string;
 }
 
 function propertyIdsForAgent(agentId: string) {
   return new Set(
-    db.agentAssignments.filter((a) => a.agentId === agentId && a.active).map((a) => a.propertyId),
+    db.agentAssignments
+      .filter((a) => a.agentId === agentId && a.active)
+      .map((a) => a.propertyId),
   );
 }
 
 /** Mock-only helper: active managing agent for a property. */
 export function managingAgentIdOf(propertyId: string): string | null {
-  return db.agentAssignments.find((a) => a.propertyId === propertyId && a.active)?.agentId ?? null;
+  return (
+    db.agentAssignments.find((a) => a.propertyId === propertyId && a.active)
+      ?.agentId ?? null
+  );
 }
 
 function withAgent(property: Property): Property {
   return { ...property, agentId: managingAgentIdOf(property.id) };
 }
 
-export function getProperties(filters: PropertyFilters = {}): Promise<Property[]> {
+export function getProperties(
+  filters: PropertyFilters = {},
+): Promise<Property[]> {
   return withLatency(() => {
     let results = [...db.properties];
 
@@ -41,6 +53,15 @@ export function getProperties(filters: PropertyFilters = {}): Promise<Property[]
     }
     if (filters.status) {
       results = results.filter((p) => p.status === filters.status);
+    }
+    if (filters.available) {
+      const occupiedIds = new Set(
+        db.tenancies.map((tenancy) => tenancy.propertyId),
+      );
+      results = results.filter(
+        (property) =>
+          property.status === "listed" && !occupiedIds.has(property.id),
+      );
     }
     if (filters.search) {
       const q = filters.search.toLowerCase();
@@ -64,15 +85,23 @@ export function getProperty(id: string): Promise<Property> {
 }
 
 export function getFeaturedProperties(): Promise<Property[]> {
-  return withLatency(() => db.properties.filter((p) => p.featured).map(withAgent));
+  return withLatency(() =>
+    db.properties.filter((p) => p.featured).map(withAgent),
+  );
 }
 
-export function getTopPerformingProperties(agentId: string, limit = 3): Promise<Property[]> {
+export function getTopPerformingProperties(
+  agentId: string,
+  limit = 3,
+): Promise<Property[]> {
   return withLatency(() => {
     const ids = propertyIdsForAgent(agentId);
     return db.properties
       .filter((p) => ids.has(p.id))
-      .sort((a, b) => b.occupancyRate * b.priceAnnual - a.occupancyRate * a.priceAnnual)
+      .sort(
+        (a, b) =>
+          b.occupancyRate * b.priceAnnual - a.occupancyRate * a.priceAnnual,
+      )
       .slice(0, limit)
       .map(withAgent);
   });
@@ -106,7 +135,10 @@ export function unassignAgent(propertyId: string): Promise<void> {
   });
 }
 
-export function updateProperty(id: string, patch: Partial<Property>): Promise<Property> {
+export function updateProperty(
+  id: string,
+  patch: Partial<Property>,
+): Promise<Property> {
   return withLatency(() => {
     const idx = db.properties.findIndex((p) => p.id === id);
     if (idx === -1) throw new Error(`Property ${id} not found`);
@@ -116,7 +148,9 @@ export function updateProperty(id: string, patch: Partial<Property>): Promise<Pr
 }
 
 export function createProperty(
-  dto: Omit<Property, "id" | "occupancyRate" | "status" | "agentId"> & { status?: PropertyStatus },
+  dto: Omit<Property, "id" | "occupancyRate" | "status" | "agentId"> & {
+    status?: PropertyStatus;
+  },
 ): Promise<Property> {
   return withLatency(() => {
     const property: Property = {

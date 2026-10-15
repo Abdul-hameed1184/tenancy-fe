@@ -9,7 +9,7 @@ This document lists every endpoint the PLEET frontend calls. If the backend impl
 ```bash
 cp .env.example .env
 # edit .env
-VITE_API_BASE_URL=http://localhost:8000/api
+VITE_API_BASE_URL=http://localhost:8000/api/v1
 npm run dev   # restart after changing .env
 ```
 
@@ -175,17 +175,43 @@ interface Report {
 
 | Method | Path | Body / Query | Response | Roles |
 |---|---|---|---|---|
-| POST | `/auth/login` | `{ role, email, password }` | `{ user: User, token: string }` | public |
+| POST | `/auth/login` | `{ email, password }` | `{ user: User, token: string }` + sets refresh cookie | public |
+| POST | `/auth/refresh` | – (header `X-Requested-With: XMLHttpRequest`, refresh cookie) | `{ token: string }` + rotates cookie | public |
 | POST | `/auth/register` | `{ role: "landlord"\|"agent"\|"tenant", name, email, password }` | `{ user: User, token: string }` | public |
 | GET | `/auth/me` | – | `User` (or `AgentProfile` for agents) | any |
 | POST | `/auth/logout` | – | `204` / anything | any |
 | POST | `/auth/forgot-password` | `{ email }` | `204` / anything | public |
 | POST | `/auth/reset-password` | `{ token, password }` | `204` / anything | public |
-| PATCH | `/users/:id` | `{ id, name, phone? }` | `User` | any (own profile) |
+| POST | `/auth/verify-email` | `{ token }` | `User` (now `emailVerified: true`) | public |
+| POST | `/auth/resend-verification` | `{ email? }` (ignored when signed in) | `204` | public, any |
+| PATCH | `/users/:id` | `{ id, name?, phone?, avatarUrl? }` | `User` | any verified (own profile) |
+| POST | `/uploads/signature` | `{ purpose: "property_photo"\|"avatar" }` | `UploadSignature` (see 4.11) | verified; `property_photo`: landlord |
 
-- **Login:** `role` is the tab the user picked. Reject the login if the account's role doesn't match, or ignore `role`; the UI routes by `user.role` either way.
+- **Login:** only `email` and `password` are sent. The UI routes by `user.role`.
+- **Tokens:** the access token (`token`) is a short-lived JWT. The frontend keeps it only in the Zustand store's in-memory state and never writes it to localStorage. The refresh token lives only in the HttpOnly `pleet_refresh` cookie (path `/api/v1/auth/`), which JavaScript cannot read. Every request is sent with `credentials: "include"`.
+- **Refresh flow:**
+  - The client calls `/auth/refresh` (a) when it is signed in but has no access token, e.g. after a page reload; (b) about 30 s before the access token's `exp`; and (c) once after any 401, then retries the original request.
+  - Refresh calls that happen at the same time are merged into one request, so the rotated cookie is never reused.
+  - If the refresh fails, the session is cleared and the user is redirected to `/auth/login?returnTo=...`.
+- **CORS:** `CORS_ALLOW_CREDENTIALS = True` is required, and the origin must be listed explicitly, not `*`.
 - **Session refresh:** `/auth/me` is called once on app load when a token is stored. The client updates the cached user from it.
 - **Reset link:** the email link must open `<frontend>/auth/reset-password?token=<token>`. The frontend reads `token` from the URL and sends it back.
+- **Email verification:**
+  - `User.emailVerified` is `false` after registration, and the API emails a link to `<frontend>/auth/verify-email?token=<token>`, valid for 3 days.
+  - Unverified users can sign in, call `/auth/me` and resend the email. Every dashboard API answers `403 { "message": "...", "code": "email_not_verified" }`.
+  - The UI routes unverified users to `/auth/verify-email-sent`: after login and register, in the dashboard route guards, and on that 403.
+  - Accounts created before verification existed are treated as verified.
+
+### 4.11 Image uploads (direct to Cloudinary)
+
+1. `POST /uploads/signature { purpose }` returns `{ uploadUrl, fields, maxBytes, allowedFormats, expiresAt }`.
+2. The browser POSTs `multipart/form-data` to `uploadUrl`, with **every** key/value of `fields` plus `file`. The file goes straight to Cloudinary, never through the API.
+3. Cloudinary returns `{ secure_url, ... }`. Store `secure_url` in `photos[]` (`POST`/`PATCH /properties`) or in `avatarUrl` (`PATCH /users/:id`).
+
+- The server signs the folder (`pleet/<purpose>/<userId>`), a random `public_id`, the allowed formats (jpg, jpeg, png, webp) and a resize limit. Changing any of them makes Cloudinary reject the upload, and a signature expires after 1 hour.
+- **The API only accepts Cloudinary URLs from the uploader's own folder.** Property photos may still be external https URLs, as before.
+- Size limits are 10 MB for property photos and 5 MB for avatars. The client checks them before uploading, because Cloudinary signatures can't encode a size limit.
+- With no Cloudinary keys configured, the endpoint answers `503`. In mock mode, the frontend uses local preview URLs instead.
 
 ### 4.2 Properties
 

@@ -8,11 +8,15 @@ import { useProperties } from "@/features/properties/hooks/useProperties";
 import { fadeUp, stagger } from "./motionVariants";
 
 export function EliteListingsSection() {
-  const { data: allProperties, isLoading: listingsLoading } = useProperties();
+  const { data: allProperties, isLoading: listingsLoading } = useProperties({
+    available: true,
+  });
   const navigate = useNavigate();
 
   const featured = allProperties?.filter((p) => p.featured);
-  const listings = (featured && featured.length > 0 ? featured : allProperties)?.slice(0, 3);
+  const listings = (
+    featured && featured.length > 0 ? featured : allProperties
+  )?.slice(0, 3);
 
   return (
     <section className="border-t border-navy-700/60 bg-navy-900/40 py-16">
@@ -36,10 +40,15 @@ export function EliteListingsSection() {
           className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
         >
           {listingsLoading &&
-            Array.from({ length: 3 }).map((_, i) => <LoadingSkeletonCard key={i} lines={4} />)}
+            Array.from({ length: 3 }).map((_, i) => (
+              <LoadingSkeletonCard key={i} lines={4} />
+            ))}
           {listings?.map((property) => (
             <motion.div key={property.id} variants={fadeUp}>
-              <PropertyCard property={property} onClick={() => navigate(`/rentals/${property.id}`)} />
+              <PropertyCard
+                property={property}
+                onClick={() => navigate(`/rentals/${property.id}`)}
+              />
             </motion.div>
           ))}
         </motion.div>

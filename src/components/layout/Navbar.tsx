@@ -2,6 +2,8 @@ import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useSession } from "@/features/auth/hooks/useSession";
+import type { Role } from "@/types/entities";
 import { cn } from "@/lib/utils";
 
 const links = [
@@ -12,6 +14,14 @@ const links = [
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
+  const user = useSession();
+  const dashboardPathByRole: Record<Role, string> = {
+    admin: "/admin",
+    landlord: "/landlord",
+    agent: "/agent",
+    tenant: "/tenant",
+  };
+  const dashboardPath = user ? dashboardPathByRole[user.role] : null;
 
   return (
     <header className="sticky top-0 z-40 border-b border-navy-700/60 bg-navy-950/90 backdrop-blur-sm">
@@ -28,7 +38,9 @@ export function Navbar() {
               className={({ isActive }) =>
                 cn(
                   "text-sm font-medium transition-colors",
-                  isActive ? "text-brand-400" : "text-navy-300 hover:text-white",
+                  isActive
+                    ? "text-brand-400"
+                    : "text-navy-300 hover:text-white",
                 )
               }
             >
@@ -38,17 +50,25 @@ export function Navbar() {
         </nav>
 
         <div className="hidden items-center gap-3 md:flex">
-          <Button variant="ghost" asChild>
-            <Link to="/auth/login">Login</Link>
-          </Button>
-          <Button asChild>
-            <Link to="/auth/register">Get Started</Link>
-          </Button>
+          {dashboardPath ? (
+            <Button asChild>
+              <Link to={dashboardPath}>Return to dashboard</Link>
+            </Button>
+          ) : (
+            <>
+              <Button variant="ghost" asChild>
+                <Link to="/auth/login">Login</Link>
+              </Button>
+              <Button asChild>
+                <Link to="/auth/register">Get Started</Link>
+              </Button>
+            </>
+          )}
         </div>
 
         <button
           type="button"
-          onClick={() => setOpen((v) => !v)}
+          onClick={() => setOpen((value) => !value)}
           className="flex h-10 w-10 items-center justify-center rounded-md text-navy-300 hover:bg-navy-800 md:hidden"
           aria-label="Toggle menu"
         >
@@ -70,16 +90,26 @@ export function Navbar() {
               </NavLink>
             ))}
             <div className="mt-2 flex flex-col gap-2">
-              <Button variant="secondary" asChild>
-                <Link to="/auth/login" onClick={() => setOpen(false)}>
-                  Login
-                </Link>
-              </Button>
-              <Button asChild>
-                <Link to="/auth/register" onClick={() => setOpen(false)}>
-                  Get Started
-                </Link>
-              </Button>
+              {dashboardPath ? (
+                <Button asChild>
+                  <Link to={dashboardPath} onClick={() => setOpen(false)}>
+                    Return to dashboard
+                  </Link>
+                </Button>
+              ) : (
+                <>
+                  <Button variant="secondary" asChild>
+                    <Link to="/auth/login" onClick={() => setOpen(false)}>
+                      Login
+                    </Link>
+                  </Button>
+                  <Button asChild>
+                    <Link to="/auth/register" onClick={() => setOpen(false)}>
+                      Get Started
+                    </Link>
+                  </Button>
+                </>
+              )}
             </div>
           </nav>
         </div>

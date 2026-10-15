@@ -1,4 +1,4 @@
-import { withLatency } from "@/lib/api/http";
+import { ApiError, withLatency } from "@/lib/api/http";
 import { db } from "@/mocks/db";
 import { managingAgentIdOf } from "@/features/properties/api.mock";
 import type { TenancyDetail } from "./types";
@@ -9,7 +9,11 @@ function toDetail(tenancyId: string): TenancyDetail | undefined {
   const tenant = db.users.find((u) => u.id === tenancy.tenantId);
   const property = db.properties.find((p) => p.id === tenancy.propertyId);
   if (!tenant || !property) return undefined;
-  return { ...tenancy, tenant, property: { ...property, agentId: managingAgentIdOf(property.id) } };
+  return {
+    ...tenancy,
+    tenant,
+    property: { ...property, agentId: managingAgentIdOf(property.id) },
+  };
 }
 
 export interface TenancyFilters {
@@ -18,7 +22,9 @@ export interface TenancyFilters {
   propertyId?: string;
 }
 
-export function getTenancies(filters: TenancyFilters = {}): Promise<TenancyDetail[]> {
+export function getTenancies(
+  filters: TenancyFilters = {},
+): Promise<TenancyDetail[]> {
   return withLatency(() => {
     let details = db.tenancies
       .map((t) => toDetail(t.id))
@@ -28,10 +34,14 @@ export function getTenancies(filters: TenancyFilters = {}): Promise<TenancyDetai
       details = details.filter((d) => d.propertyId === filters.propertyId);
     }
     if (filters.agentId) {
-      details = details.filter((d) => managingAgentIdOf(d.propertyId) === filters.agentId);
+      details = details.filter(
+        (d) => managingAgentIdOf(d.propertyId) === filters.agentId,
+      );
     }
     if (filters.landlordId) {
-      details = details.filter((d) => d.property.landlordId === filters.landlordId);
+      details = details.filter(
+        (d) => d.property.landlordId === filters.landlordId,
+      );
     }
     return details;
   });
@@ -48,7 +58,7 @@ export function getTenancy(id: string): Promise<TenancyDetail> {
 export function getTenancyByTenantId(tenantId: string): Promise<TenancyDetail> {
   return withLatency(() => {
     const tenancy = db.tenancies.find((t) => t.tenantId === tenantId);
-    if (!tenancy) throw new Error(`No tenancy found for tenant ${tenantId}`);
+    if (!tenancy) throw new ApiError("You don't have a current tenancy.", 404);
     const detail = toDetail(tenancy.id);
     if (!detail) throw new Error(`Tenancy ${tenancy.id} not found`);
     return detail;

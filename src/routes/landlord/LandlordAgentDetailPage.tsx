@@ -31,14 +31,29 @@ export default function LandlordAgentDetailPage() {
 
   const columns: DataTableColumn<Property>[] = [
     { key: "title", header: "Property", render: (p) => p.title },
-    { key: "location", header: "Location", render: (p) => `${p.neighborhood}, ${p.city}` },
-    { key: "rent", header: "Annual Rent", render: (p) => formatCompactNaira(p.priceAnnual) },
-    { key: "status", header: "Status", render: (p) => <StatusBadge status={p.status} /> },
+    {
+      key: "location",
+      header: "Location",
+      render: (p) => `${p.neighborhood}, ${p.city}`,
+    },
+    {
+      key: "rent",
+      header: "Annual Rent",
+      render: (p) => formatCompactNaira(p.priceAnnual),
+    },
+    {
+      key: "status",
+      header: "Status",
+      render: (p) => <StatusBadge status={p.status} />,
+    },
   ];
 
   return (
     <div>
-      <Link to="/landlord/agents" className="flex items-center gap-1 text-sm text-navy-400 hover:text-white">
+      <Link
+        to="/landlord/agents"
+        className="flex items-center gap-1 text-sm text-navy-400 hover:text-white"
+      >
         <ArrowLeft className="h-4 w-4" /> Back to agents
       </Link>
 
@@ -46,7 +61,9 @@ export default function LandlordAgentDetailPage() {
         <div className="flex items-center gap-4">
           <Avatar className="h-14 w-14">
             <AvatarImage src={agent.avatarUrl} alt={agent.name} />
-            <AvatarFallback>{agent.name.slice(0, 2).toUpperCase()}</AvatarFallback>
+            <AvatarFallback>
+              {agent.name.slice(0, 2).toUpperCase()}
+            </AvatarFallback>
           </Avatar>
           <div>
             <h1 className="text-display-sm text-white">{agent.name}</h1>
@@ -60,10 +77,12 @@ export default function LandlordAgentDetailPage() {
         <div className="lg:col-span-2">
           <Card className="p-5">
             <SectionHeader
-              title="Properties managed for you"
+              title="Managed Properties"
               action={
                 <button
-                  onClick={() => openDialog("assign-agent", { agentId: agent.id })}
+                  onClick={() =>
+                    openDialog("assign-agent", { agentId: agent.id })
+                  }
                   className="text-sm font-medium text-brand-400 hover:text-brand-300"
                 >
                   Assign to a property
@@ -87,27 +106,29 @@ export default function LandlordAgentDetailPage() {
         <div className="space-y-6">
           <Card className="p-5">
             <SectionHeader title="Agent Details" />
-            <dl className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <dt className="text-navy-400">Trust Score</dt>
+            <dl className="space-y-3 text-sm">
+              <div className="flex justify-between gap-3">
+                <dt className="text-navy-400">Trust score</dt>
                 <dd>
                   <Badge variant="success">{agent.trustScore}%</Badge>
                 </dd>
               </div>
-              <div className="flex justify-between">
+              <div className="flex justify-between gap-3">
+                <dt className="text-navy-400">Agency</dt>
+                <dd className="text-right text-white">{agent.agency}</dd>
+              </div>
+              <div className="flex justify-between gap-3">
                 <dt className="text-navy-400">Email</dt>
-                <dd className="text-white">{agent.email}</dd>
+                <dd className="text-right text-white break-all">
+                  {agent.email}
+                </dd>
               </div>
               {agent.phone && (
-                <div className="flex justify-between">
+                <div className="flex justify-between gap-3">
                   <dt className="text-navy-400">Phone</dt>
-                  <dd className="text-white">{agent.phone}</dd>
+                  <dd className="text-right text-white">{agent.phone}</dd>
                 </div>
               )}
-              <div className="flex justify-between">
-                <dt className="text-navy-400">Assets Managed (platform-wide)</dt>
-                <dd className="text-white">{agent.assetsManagedCount}</dd>
-              </div>
             </dl>
           </Card>
         </div>

@@ -9,9 +9,21 @@ import { FavoriteButton } from "./FavoriteButton";
 interface PropertyCardProps {
   property: Property;
   onClick?: () => void;
+  isOccupied?: boolean;
 }
 
-export function PropertyCard({ property, onClick }: PropertyCardProps) {
+export function PropertyCard({
+  property,
+  onClick,
+  isOccupied = false,
+}: PropertyCardProps) {
+  const badgeLabel =
+    isOccupied || property.status === "occupied"
+      ? "Occupied"
+      : property.status === "unavailable"
+        ? "Unavailable"
+        : "For Rent";
+
   return (
     <motion.div whileHover={{ y: -3 }} transition={{ duration: 0.18 }}>
       <Card
@@ -29,7 +41,7 @@ export function PropertyCard({ property, onClick }: PropertyCardProps) {
             variant="info"
             className="absolute left-3 top-3 border-none bg-navy-950/70 text-white backdrop-blur-sm"
           >
-            {property.status === "unavailable" ? "Unavailable" : "For Rent"}
+            {badgeLabel}
           </Badge>
           <FavoriteButton className="absolute right-3 top-3" />
         </div>
@@ -38,7 +50,9 @@ export function PropertyCard({ property, onClick }: PropertyCardProps) {
             <MapPin className="h-3 w-3" />
             {property.neighborhood}, {property.city}
           </p>
-          <h3 className="mt-1 truncate text-base font-semibold text-white">{property.title}</h3>
+          <h3 className="mt-1 truncate text-base font-semibold text-white">
+            {property.title}
+          </h3>
           <div className="mt-3 flex items-center gap-4 text-sm text-navy-300">
             <span className="flex items-center gap-1">
               <BedDouble className="h-4 w-4" /> {property.bedrooms}
@@ -47,7 +61,10 @@ export function PropertyCard({ property, onClick }: PropertyCardProps) {
               <ShowerHead className="h-4 w-4" /> {property.bathrooms}
             </span>
             <span className="flex items-center gap-1">
-              <Ruler className="h-4 w-4" /> {property.sqft.toLocaleString()} sqft
+              <Ruler className="h-4 w-4" />{" "}
+              {property.sqft
+                ? `${property.sqft.toLocaleString()} sqft`
+                : "Area not provided"}
             </span>
           </div>
           <div className="mt-4 flex items-center justify-between border-t border-navy-700/60 pt-4">

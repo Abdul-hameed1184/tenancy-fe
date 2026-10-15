@@ -19,12 +19,15 @@ import { useProperties } from "@/features/properties/hooks/useProperties";
 import { useRequestInspection } from "@/features/inspections/hooks/useRequestInspection";
 import type { Property } from "@/types/entities";
 
-const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.05 } } };
+const stagger = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.05 } },
+};
 const fadeUp = { hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } };
 
 export default function TenantExplorePage() {
   const user = useSession();
-  const { data: properties, isLoading } = useProperties({ status: "listed" });
+  const { data: properties, isLoading } = useProperties({ available: true });
   const [selected, setSelected] = useState<Property | null>(null);
   const [scheduledAt, setScheduledAt] = useState("");
   const requestInspection = useRequestInspection();
@@ -32,7 +35,9 @@ export default function TenantExplorePage() {
   return (
     <div>
       <h1 className="text-display-sm text-white sm:text-display-md">Explore</h1>
-      <p className="mt-1 text-navy-300">Available PLEET-managed residences you can request to view.</p>
+      <p className="mt-1 text-navy-300">
+        Available PLEET-managed residences you can request to view.
+      </p>
 
       <motion.div
         initial="hidden"
@@ -40,7 +45,10 @@ export default function TenantExplorePage() {
         variants={stagger}
         className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
       >
-        {isLoading && Array.from({ length: 6 }).map((_, i) => <LoadingSkeletonCard key={i} lines={4} />)}
+        {isLoading &&
+          Array.from({ length: 6 }).map((_, i) => (
+            <LoadingSkeletonCard key={i} lines={4} />
+          ))}
         {properties?.map((property) => (
           <motion.div key={property.id} variants={fadeUp}>
             <Card className="overflow-hidden">
@@ -51,8 +59,16 @@ export default function TenantExplorePage() {
                   onOpenChange={(open) => setSelected(open ? property : null)}
                 >
                   <DialogTrigger asChild>
-                    <Button variant="secondary" className="w-full">
-                      Request Inspection
+                    <Button
+                      variant="secondary"
+                      className="w-full"
+                      disabled={property.status !== "listed"}
+                    >
+                      {property.status === "occupied"
+                        ? "Occupied"
+                        : property.status === "unavailable"
+                          ? "Unavailable"
+                          : "Request Inspection"}
                     </Button>
                   </DialogTrigger>
                   <DialogContent>
@@ -63,7 +79,8 @@ export default function TenantExplorePage() {
                       className="space-y-4"
                       onSubmit={(e) => {
                         e.preventDefault();
-                        if (!user || !selected) return;
+                        if (!user || !selected || selected.status !== "listed")
+                          return;
                         const agentId = selected.agentId;
                         if (!agentId) return;
                         requestInspection.mutate(
@@ -79,7 +96,9 @@ export default function TenantExplorePage() {
                       }}
                     >
                       <div className="space-y-1.5">
-                        <Label htmlFor="scheduledAt">Preferred date &amp; time</Label>
+                        <Label htmlFor="scheduledAt">
+                          Preferred date &amp; time
+                        </Label>
                         <Input
                           id="scheduledAt"
                           type="datetime-local"
@@ -89,8 +108,13 @@ export default function TenantExplorePage() {
                         />
                       </div>
                       <DialogFooter>
-                        <Button type="submit" disabled={requestInspection.isPending}>
-                          {requestInspection.isPending ? "Requesting..." : "Request"}
+                        <Button
+                          type="submit"
+                          disabled={requestInspection.isPending}
+                        >
+                          {requestInspection.isPending
+                            ? "Requesting..."
+                            : "Request"}
                         </Button>
                       </DialogFooter>
                     </form>

@@ -1,6 +1,13 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Building2, CheckCircle2, Home, Plus, UserCheck, UserPlus } from "lucide-react";
+import {
+  Building2,
+  CheckCircle2,
+  Home,
+  Plus,
+  UserCheck,
+  UserPlus,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -12,11 +19,15 @@ import { StatusBadge } from "@/components/shared/StatusBadge";
 import { useSession } from "@/features/auth/hooks/useSession";
 import { useAgents } from "@/features/agents/hooks/useAgents";
 import { useProperties } from "@/features/properties/hooks/useProperties";
+import { useTenancies } from "@/features/tenants/hooks/useTenancies";
 import { useDashboardDialogStore } from "@/stores/dashboardDialogStore";
 import type { Property } from "@/types/entities";
 import { formatCompactNaira } from "@/lib/utils";
 
-const stagger = { hidden: {}, visible: { transition: { staggerChildren: 0.05 } } };
+const stagger = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.05 } },
+};
 const fadeUp = { hidden: { opacity: 0, y: 10 }, visible: { opacity: 1, y: 0 } };
 
 export default function LandlordPropertiesPage() {
@@ -24,22 +35,45 @@ export default function LandlordPropertiesPage() {
   const navigate = useNavigate();
   const openDialog = useDashboardDialogStore((s) => s.openDialog);
   const [search, setSearch] = useState("");
-  const { data: properties, isLoading } = useProperties({ landlordId: user?.id, search: search || undefined });
+  const { data: properties, isLoading } = useProperties({
+    landlordId: user?.id,
+    search: search || undefined,
+  });
+  const { data: portfolio, isLoading: portfolioLoading } = useProperties({
+    landlordId: user?.id,
+  });
+  const { data: tenancies, isLoading: tenanciesLoading } = useTenancies({
+    landlordId: user?.id,
+  });
   const { data: agents } = useAgents();
 
-  const agentName = (agentId?: string | null) => agents?.find((a) => a.id === agentId)?.name;
+  const agentName = (agentId?: string | null) =>
+    agents?.find((a) => a.id === agentId)?.name;
 
-  const total = properties?.length ?? 0;
-  const occupied = properties?.filter((p) => p.status === "occupied").length ?? 0;
-  const vacant = properties?.filter((p) => p.status === "listed").length ?? 0;
-  const withAgent = properties?.filter((p) => p.agentId).length ?? 0;
+  const allProperties = portfolio ?? [];
+  const occupiedPropertyIds = new Set(
+    (tenancies ?? []).map((tenancy) => tenancy.propertyId),
+  );
+  const total = allProperties.length;
+  const occupied = allProperties.filter((property) =>
+    occupiedPropertyIds.has(property.id),
+  ).length;
+  const vacant = total - occupied;
+  const withAgent = allProperties.filter((property) =>
+    Boolean(property.agentId),
+  ).length;
+  const statsLoading = portfolioLoading || tenanciesLoading;
 
   const columns: DataTableColumn<Property>[] = [
     {
       key: "photo",
       header: "",
       render: (p) => (
-        <img src={p.photos[0]} alt="" className="h-10 w-10 rounded-md object-cover" />
+        <img
+          src={p.photos[0]}
+          alt=""
+          className="h-10 w-10 rounded-md object-cover"
+        />
       ),
     },
     {
@@ -57,14 +91,30 @@ export default function LandlordPropertiesPage() {
     {
       key: "specs",
       header: "Specs",
-      render: (p) => `${p.bedrooms} bd • ${p.bathrooms} ba • ${p.sqft.toLocaleString()} sqft`,
+      render: (p) =>
+        `${p.bedrooms} bd • ${p.bathrooms} ba • ${p.sqft ? `${p.sqft.toLocaleString()} sqft` : "Area not provided"}`,
     },
-    { key: "rent", header: "Annual Rent", render: (p) => formatCompactNaira(p.priceAnnual) },
-    { key: "status", header: "Status", render: (p) => <StatusBadge status={p.status} /> },
+    {
+      key: "rent",
+      header: "Annual Rent",
+      render: (p) => formatCompactNaira(p.priceAnnual),
+    },
+    {
+      key: "status",
+      header: "Status",
+      render: (p) => (
+        <StatusBadge
+          status={occupiedPropertyIds.has(p.id) ? "occupied" : p.status}
+        />
+      ),
+    },
     {
       key: "agent",
       header: "Agent",
-      render: (p) => agentName(p.agentId) ?? <span className="text-navy-500">Unassigned</span>,
+      render: (p) =>
+        agentName(p.agentId) ?? (
+          <span className="text-navy-500">Unassigned</span>
+        ),
     },
     {
       key: "actions",
@@ -78,7 +128,8 @@ export default function LandlordPropertiesPage() {
             openDialog("assign-agent", { propertyId: p.id });
           }}
         >
-          <UserPlus className="h-4 w-4" /> {p.agentId ? "Reassign agent" : "Assign agent"}
+          <UserPlus className="h-4 w-4" />{" "}
+          {p.agentId ? "Reassign agent" : "Assign agent"}
         </Button>
       ),
     },
@@ -88,8 +139,12 @@ export default function LandlordPropertiesPage() {
     <div>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-display-sm text-white sm:text-display-md">My Properties</h1>
-          <p className="mt-1 text-navy-300">Your full portfolio across Nigeria.</p>
+          <h1 className="text-display-sm text-white sm:text-display-md">
+            My Properties
+          </h1>
+          <p className="mt-1 text-navy-300">
+            Your full portfolio across Nigeria.
+          </p>
         </div>
         <Button onClick={() => openDialog("create-property")}>
           <Plus className="h-4 w-4" /> List New Asset
@@ -102,12 +157,18 @@ export default function LandlordPropertiesPage() {
         variants={stagger}
         className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
       >
-        {isLoading ? (
-          Array.from({ length: 4 }).map((_, i) => <LoadingSkeletonCard key={i} />)
+        {statsLoading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <LoadingSkeletonCard key={i} />
+          ))
         ) : (
           <>
             <motion.div variants={fadeUp}>
-              <StatCard icon={Building2} label="Total Properties" value={total} />
+              <StatCard
+                icon={Building2}
+                label="Total Properties"
+                value={total}
+              />
             </motion.div>
             <motion.div variants={fadeUp}>
               <StatCard icon={CheckCircle2} label="Occupied" value={occupied} />
@@ -116,7 +177,11 @@ export default function LandlordPropertiesPage() {
               <StatCard icon={Home} label="Vacant / Available" value={vacant} />
             </motion.div>
             <motion.div variants={fadeUp}>
-              <StatCard icon={UserCheck} label="Agent-Assigned" value={withAgent} />
+              <StatCard
+                icon={UserCheck}
+                label="Agent-Assigned"
+                value={withAgent}
+              />
             </motion.div>
           </>
         )}

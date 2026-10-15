@@ -79,7 +79,7 @@ export function AssignAgentDialog() {
                   <SelectContent>
                     {pickingAgent
                       ? agents?.map((agent) => (
-                          <SelectItem key={agent.id} value={agent.id}>
+                          <SelectItem className="h-12" key={agent.id} value={agent.id}>
                             {agent.name} — {agent.agency}
                             {agent.id === currentAgentId ? " (current)" : ""}
                           </SelectItem>

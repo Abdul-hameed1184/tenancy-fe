@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { DashboardTopbar } from "./DashboardTopbar";
 import type { NavItem } from "./navConfig";
@@ -10,8 +11,13 @@ interface DashboardShellProps {
   settingsPath: string;
 }
 
-export function DashboardShell({ navItems, settingsPath }: DashboardShellProps) {
+export function DashboardShell({
+  navItems,
+  settingsPath,
+}: DashboardShellProps) {
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const { pathname } = useLocation();
+  const isMessagesPage = pathname.endsWith("/messages");
 
   return (
     <div className="min-h-screen bg-navy-950">
@@ -22,13 +28,25 @@ export function DashboardShell({ navItems, settingsPath }: DashboardShellProps) 
       <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
         <SheetContent side="left" className="w-72 p-4">
           <SheetTitle className="sr-only">Navigation menu</SheetTitle>
-          <SidebarNavContent navItems={navItems} onNavigate={() => setMobileNavOpen(false)} />
+          <SidebarNavContent
+            navItems={navItems}
+            onNavigate={() => setMobileNavOpen(false)}
+          />
         </SheetContent>
       </Sheet>
 
       <div className="lg:pl-64">
-        <DashboardTopbar settingsPath={settingsPath} onMenuClick={() => setMobileNavOpen(true)} />
-        <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        <DashboardTopbar
+          settingsPath={settingsPath}
+          onMenuClick={() => setMobileNavOpen(true)}
+        />
+        <main
+          className={
+            isMessagesPage
+              ? "relative h-[calc(100dvh-4rem)] w-full max-w-none overflow-hidden p-0"
+              : "mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8"
+          }
+        >
           <PageTransition />
         </main>
       </div>

@@ -6,7 +6,9 @@ import type {
   AuthResponse,
   ForgotPasswordInput,
   LoginInput,
+  ProfilePatch,
   RegisterInput,
+  ResendVerificationInput,
   ResetPasswordInput,
 } from "./types";
 
@@ -38,7 +40,9 @@ export function login(input: LoginInput): Promise<AuthResponse> {
     if (!input.email || !input.password) {
       throw new Error("Email and password are required");
     }
-    const match = db.users.find((u) => u.email.toLowerCase() === input.email.toLowerCase());
+    const match = db.users.find(
+      (u) => u.email.toLowerCase() === input.email.toLowerCase(),
+    );
     return { user: match ?? demoUserForRole(input.role), token: MOCK_TOKEN };
   });
 }
@@ -53,7 +57,7 @@ export function logout(): Promise<void> {
   return Promise.resolve();
 }
 
-export function updateProfile(id: string, patch: Pick<User, "name" | "phone">): Promise<User> {
+export function updateProfile(id: string, patch: ProfilePatch): Promise<User> {
   return withLatency(() => {
     const idx = db.users.findIndex((u) => u.id === id);
     if (idx === -1) throw new Error(`User ${id} not found`);
@@ -62,7 +66,7 @@ export function updateProfile(id: string, patch: Pick<User, "name" | "phone">): 
   });
 }
 
-export function register(input: RegisterInput): Promise<AuthResponse> {
+export function register(input: RegisterInput): Promise<{ message: string }> {
   return withLatency(() => {
     const user: User = {
       id: genId("user"),
@@ -72,7 +76,9 @@ export function register(input: RegisterInput): Promise<AuthResponse> {
       createdAt: new Date().toISOString(),
     };
     db.users.push(user);
-    return { user, token: MOCK_TOKEN };
+    return {
+      message: `Account created for ${input.email}. Check your inbox to verify your email.`,
+    };
   });
 }
 
@@ -90,4 +96,23 @@ export function resetPassword(input: ResetPasswordInput): Promise<void> {
       throw new Error("Password is required");
     }
   });
+}
+
+/** Mock mode has no inbox: any non-empty token "verifies" the most recent unverified user. */
+export function verifyEmail(token: string): Promise<User> {
+  return withLatency(() => {
+    if (!token)
+      throw new Error("This verification link is invalid or has expired.");
+    const user =
+      [...db.users].reverse().find((u) => u.emailVerified === false) ??
+      db.users[0];
+    user.emailVerified = true;
+    return user;
+  });
+}
+
+export function resendVerification(
+  _input: ResendVerificationInput = {},
+): Promise<void> {
+  return withLatency(() => undefined);
 }

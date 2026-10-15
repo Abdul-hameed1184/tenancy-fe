@@ -8,9 +8,15 @@ export interface User {
   avatarUrl?: string;
   phone?: string;
   createdAt: string;
+  /** `false` until the user follows the emailed link; dashboards stay locked until then. */
+  emailVerified?: boolean;
 }
 
-export type VerificationStatus = "unverified" | "pending" | "verified" | "rejected";
+export type VerificationStatus =
+  | "unverified"
+  | "pending"
+  | "verified"
+  | "rejected";
 
 export interface AgentProfile extends User {
   role: "agent";
@@ -32,9 +38,10 @@ export interface Property {
   state: string;
   neighborhood: string;
   photos: string[];
+  videos?: string[];
   bedrooms: number;
   bathrooms: number;
-  sqft: number;
+  sqft?: number | null;
   priceAnnual: number;
   status: PropertyStatus;
   landlordId: string;
@@ -91,7 +98,11 @@ export interface MaintenanceRequest {
   reportedAt: string;
 }
 
-export type InspectionStatus = "requested" | "confirmed" | "completed" | "cancelled";
+export type InspectionStatus =
+  | "requested"
+  | "confirmed"
+  | "completed"
+  | "cancelled";
 
 export interface Inspection {
   id: string;
@@ -118,6 +129,16 @@ export interface MessageThread {
   participantIds: string[];
   propertyId?: string;
   lastMessageAt: string;
+  unreadCount?: number;
+  lastMessagePreview?: string;
+}
+
+export interface MessageContact {
+  id: string;
+  name: string;
+  role: Role;
+  propertyId: string;
+  propertyTitle: string;
 }
 
 export type ReportType = "listing" | "user";

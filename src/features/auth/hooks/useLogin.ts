@@ -1,9 +1,10 @@
 import { useMutation } from "@tanstack/react-query";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
-import { ROLE_HOME_ROUTE } from "@/lib/constants";
+import { ROLE_HOME_ROUTE, VERIFY_EMAIL_NOTICE_ROUTE } from "@/lib/constants";
 import { login } from "../api";
 import { useAuthStore } from "../authStore";
+import { needsEmailVerification } from "../guards";
 import type { LoginInput } from "../types";
 
 export function useLogin() {
@@ -15,6 +16,10 @@ export function useLogin() {
     mutationFn: (input: LoginInput) => login(input),
     onSuccess: ({ user, token }) => {
       setSession(user, token);
+      if (needsEmailVerification(user)) {
+        navigate(VERIFY_EMAIL_NOTICE_ROUTE, { replace: true });
+        return;
+      }
       toast.success(`Welcome back, ${user.name.split(" ")[0]}.`);
       const returnTo = searchParams.get("returnTo");
       navigate(returnTo || ROLE_HOME_ROUTE[user.role], { replace: true });

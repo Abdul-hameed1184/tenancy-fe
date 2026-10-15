@@ -10,10 +10,14 @@ import type {
   TenantPropertyRecord,
   User,
 } from "@/types/entities";
+import type { TenantChangeRequest } from "@/features/tenants/tenantRequests";
 import { agentAssignments as agentAssignmentsSeed } from "./seed/agentAssignments.seed";
 import { inspections as inspectionsSeed } from "./seed/inspections.seed";
 import { maintenanceRequests as maintenanceSeed } from "./seed/maintenance.seed";
-import { messages as messagesSeed, messageThreads as messageThreadsSeed } from "./seed/messages.seed";
+import {
+  messages as messagesSeed,
+  messageThreads as messageThreadsSeed,
+} from "./seed/messages.seed";
 import { properties as propertiesSeed } from "./seed/properties.seed";
 import { reports as reportsSeed } from "./seed/reports.seed";
 import { tenancies as tenanciesSeed } from "./seed/tenancies.seed";
@@ -24,6 +28,17 @@ interface Db {
   properties: Property[];
   agentAssignments: PropertyAgentAssignment[];
   tenancies: TenantPropertyRecord[];
+  tenantRequests: TenantChangeRequest[];
+  notifications: {
+    id: string;
+    recipientId: string;
+    type: string;
+    title: string;
+    message: string;
+    data: Record<string, unknown>;
+    isRead: boolean;
+    createdAt: string;
+  }[];
   maintenanceRequests: MaintenanceRequest[];
   inspections: Inspection[];
   messageThreads: MessageThread[];
@@ -41,6 +56,8 @@ function createDb(): Db {
     properties: clone(propertiesSeed),
     agentAssignments: clone(agentAssignmentsSeed),
     tenancies: clone(tenanciesSeed),
+    tenantRequests: [],
+    notifications: [],
     maintenanceRequests: clone(maintenanceSeed),
     inspections: clone(inspectionsSeed),
     messageThreads: clone(messageThreadsSeed),
